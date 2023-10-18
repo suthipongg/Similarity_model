@@ -101,6 +101,7 @@ def load_feature(file_name, path=ROOT):
 def StratifiedKFold_score(X, y, n_cv=5, index_filter = False):
     first = True
     result = []
+    result_in_n = []
     skf = StratifiedKFold(n_splits=n_cv)
     if index_filter != False:
         index_greater_filtered, index_less_filtered = index_filter
@@ -133,7 +134,7 @@ def StratifiedKFold_score(X, y, n_cv=5, index_filter = False):
             result = [acc]
         else:
             result.append(acc)
-    return result, [train_index, test_index, X, y], res
+    return result, [train_index, test_index], res
 
 def plot_image(n, img_path, ls, res_t, columns = 6, add_row=False):
     rows = len(n)
