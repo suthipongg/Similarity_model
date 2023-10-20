@@ -32,7 +32,7 @@ def get_output_at_layer(model, layer_name, input_data):
     return activations[layer_name]
 
 
-blacklist = [".DS_Store", "บาร์โค้ด", "barcode", "desktop.ini"]
+blacklist = [".DS_Store", "บาร์โค้ด", "barcode", "desktop.ini", "train_data.csv"]
 def in_blacklist(file):
     for bl in blacklist:
         if bl.lower() in file.lower():
