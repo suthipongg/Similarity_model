@@ -3,3 +3,4 @@ data/
 models/
 feature_map/
 weights/
+.ipynb_checkpoints/
