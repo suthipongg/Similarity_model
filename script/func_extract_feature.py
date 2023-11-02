@@ -68,12 +68,12 @@ class pipeline_transformer:
         self.processor = processor
         self.model.eval().to(self.device)
     
-    def process_model(self, img):
+    def process_model(self, img, return_tensors="pt"):
         inputs = self.processor(images=img, return_tensors="pt").to(self.device)
         outputs = self.model(**inputs)
         return outputs
         
-    def extract(self, img):
+    def extract(self, img, output_type='np'):
         ### return specific layer
         outputs = self.process_model(img)
         if type(self.row) == bool and not self.row:
@@ -81,7 +81,9 @@ class pipeline_transformer:
         else:
             outputs = outputs[self.layer][:, self.row]
         outputs = outputs.flatten().unsqueeze(0)
-        outputs = standardize_feature(outputs).to('cpu').detach().numpy()
+        outputs = standardize_feature(outputs)
+        if output_type=='np':
+            outputs = outputs.to('cpu').detach().numpy()
         return outputs
     
     def report_test(self):
@@ -110,7 +112,7 @@ class pipeline_transformer_onnx:
         self.model = model
         self.processor = processor
     
-    def process_model(self, img):
+    def process_model(self, img, return_tensors="np"):
         inputs = self.processor(images=img, return_tensors="np")
         outputs = self.model.run(output_names=[self.layer], input_feed=dict(inputs))[0]
         return outputs
@@ -138,8 +140,8 @@ class convert_feature:
     def __init__(self, pipeline):
         self.pipeline = pipeline
         
-    def process_extract(self, img):
-        output = self.pipeline.extract(img)
+    def process_extract(self, img, **kwargs):
+        output = self.pipeline.extract(img, **kwargs)
         return output
     
     def check_data(self, img_path, classes):

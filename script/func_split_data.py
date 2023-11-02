@@ -64,7 +64,15 @@ class split_data:
     
     def get_validate(self):
         return self.df_train_val_mix, self.df_test_val_mix
-    
+
+    def get_dict(self):
+        return {
+          'train_split': self.df_train_split,
+          'test_split': self.df_test_split,
+          'train_val': self.df_train_val_mix,
+          'test_val': self.df_test_val_mix
+        }
+  
     def report_train_test_split(self):
         print(f"amount of all data : {self.df_pd.__len__()}")
         print(f"amount of all class : {self.group_df.__len__()}")
