@@ -10,24 +10,58 @@ from script.tool import to_unit_len
 
 # Elasticsearch accesss compute score
 class ES_access:
-    def __init__(self, name_index, name_doc, url="http://localhost:9200"):
+    def __init__(self, name_index, name_doc="_doc", url="http://localhost:9200"):
         self.es = Elasticsearch(url)
         self.name_index = name_index
         self.name_doc = name_doc
+        
+    def check_index_exist(self, dims=768):
+        if self.es.indices.exists(index=self.name_index):
+            print(f"index {self.name_index} already exists")
+            return True
+        else:
+            body_product = {
+                "mappings":{
+                    "properties":{
+                        "tag":{
+                            "type":"keyword"
+                        },
+                        "labels":{
+                            "type":"keyword"
+                        },
+                        "file_names":{
+                            "type":"text"
+                        },
+                        "images_path":{
+                            "type":"text"
+                        },
+                        "features":{  
+                            "type":"dense_vector",
+                            "dims":dims,
+                            "index":True,
+                            "similarity": "dot_product"
+                        },
+                        "id":{
+                            "type":"keyword"
+                        }
+                    }
+                }
+            }
+            err = self.es.indices.create(index=self.name_index, body=body_product)
+            print(err)
+            return False
 
 class extract_to_es(ES_access):
-    def __init__(self, name_index, name_doc='_doc', host="http://localhost", port=9200):
-        super().__init__(name_index, name_doc, host, port)
+    def __init__(self, name_index, name_doc='_doc', url="http://localhost:9200"):
+        super().__init__(name_index, name_doc, url)
         self.load_crop = False
 
     def check_data_exist(self, data, n):
         if self.es.exists(index=self.name_index, id=data['tag']+"_"+str(n)):
-            data_index = self.es.get(index=ext_ep2_crop.name_index, id=data['tag']+"_"+str(n))['_source']
+            data_index = self.es.get(index=self.name_index, id=data['tag']+"_"+str(n))['_source']
             for key in ['tag', 'labels', 'file_names', 'images_path', 'id']:
                 if data[key] != data_index[key]:
-                    print("================")
-                    print(data_index[key])
-                    print(data[key])
+                    print(f"{data['tag']+"_"+str(n)} | key {key} not match | data in es -> {data_index[key]} != new data -> {data[key]}")
                     return False
             return True
         return False
