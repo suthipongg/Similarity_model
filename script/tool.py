@@ -30,3 +30,6 @@ def scan_directory(path):
 
 def standardize_feature(arr):
     return (arr-arr.mean())/arr.std()
+
+def to_unit_len(vector):
+    return vector / np.linalg.norm(vector)

@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from PIL import Image
 
 from script.func_query_body import to_list, query_tag, query_tag_count, query_cosine
+from script.tool import to_unit_len
 
 # Elasticsearch accesss compute score
 class ES_access:
@@ -13,6 +14,52 @@ class ES_access:
         self.es = Elasticsearch(url)
         self.name_index = name_index
         self.name_doc = name_doc
+
+class extract_to_es(ES_access):
+    def __init__(self, name_index, name_doc='_doc', host="http://localhost", port=9200):
+        super().__init__(name_index, name_doc, host, port)
+        self.load_crop = False
+
+    def check_data_exist(self, data, n):
+        if self.es.exists(index=self.name_index, id=data['tag']+"_"+str(n)):
+            data_index = self.es.get(index=ext_ep2_crop.name_index, id=data['tag']+"_"+str(n))['_source']
+            for key in ['tag', 'labels', 'file_names', 'images_path', 'id']:
+                if data[key] != data_index[key]:
+                    print("================")
+                    print(data_index[key])
+                    print(data[key])
+                    return False
+            return True
+        return False
+    
+    def put_to_es(self, model, dataframe, tag="train_split", replace=True, crop=False):
+        for n, img_path in enumerate(tqdm(dataframe['images_path'], leave=False)):
+            data = {
+                "tag": tag,
+                "labels": dataframe['labels'].iloc[n],
+                "file_names": dataframe['file_names'].iloc[n],
+                "images_path": img_path,
+                "id": tag+"_"+str(n)
+            }
+            if not replace and self.check_data_exist(data, n):
+                continue
+            img = Image.open(img_path).convert('RGB')
+            if crop:
+                if not self.load_crop:
+                    from script.func_crop import CropProduct
+                    self.load_crop = True
+                    self.detector = CropProduct()
+                img = self.detector.detect(img, thresh=0.5)
+            output = model.extract(img).flatten()
+            data["features"] = to_unit_len(output)
+            self.es.index(index=self.name_index, id=tag+"_"+str(n), body=data)
+        print(f"put tag {tag} success")
+
+    def put_all_tag(self, model, df, replace=True, crop=False):
+        self.put_to_es(model, df['train_split'], tag="train_split", replace=replace, crop=crop)
+        self.put_to_es(model, df['test_split'], tag="test_split", replace=replace, crop=crop)
+        self.put_to_es(model, df['train_val'], tag="train_val", replace=replace, crop=crop)
+        self.put_to_es(model, df['test_val'], tag="test_val", replace=replace, crop=crop)
 
 class measure_score(ES_access):
     def __init__(self, name_index, name_doc='_doc', url="http://localhost:9200"):
@@ -130,4 +177,5 @@ class report_image(ES_access):
         print("Split + Validate :")
         
         self.plot_image(list_split_val, top_n, ['train_split', 'train_val'], collapse)
-        return list_split, list_val
+        return {'split': list_split, 
+                'val': list_val}
