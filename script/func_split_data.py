@@ -16,9 +16,11 @@ class split_data:
         self.group_df = self.df_pd.groupby(['labels'])['labels'].count().reset_index(name='count').sort_values(['count'], ascending=False)
         filter_img_2_to_n = self.group_df[(self.group_df['count'] <= filter_img) & (self.group_df['count'] > 1)]['labels'].values
         filter_img_1_to_n = self.group_df[self.group_df['count'] <= filter_img]['labels'].values
-
+        filter_img_1 = self.group_df[self.group_df['count'] == 1]['labels']
+        
         self.df_more_n = self.df_pd[~self.df_pd['labels'].isin(filter_img_1_to_n)]
         self.df_2_to_n = self.df_pd[self.df_pd['labels'].isin(filter_img_2_to_n)]
+        self.df_1 = self.df_pd[self.df_pd['labels'].isin(filter_img_1)]
         
         skf = StratifiedKFold(n_splits=2, shuffle=True, random_state=42)
         train_2_to_n, test_2_to_n = skf.split(self.df_2_to_n, self.df_2_to_n['labels']).__next__()
@@ -70,7 +72,8 @@ class split_data:
           'train_split': self.df_train_split,
           'test_split': self.df_test_split,
           'train_val': self.df_train_val_mix,
-          'test_val': self.df_test_val_mix
+          'test_val': self.df_test_val_mix,
+          'one_img' : self.df_1
         }
   
     def report_train_test_split(self):
@@ -80,7 +83,7 @@ class split_data:
         print(f"amount of 2-8 img class : {self.group_df[(self.group_df['count'] <= self.filter_img) & (self.group_df['count'] > 1)]['labels'].values.__len__()}")
         print(f"amount of data more 8 img : {self.df_more_n.__len__()}")
         print(f"amount of more 8 img class : {self.group_df[self.group_df['count'] > self.filter_img]['labels'].__len__()}")
-        print(f"amount of data & class only one : {self.group_df[self.group_df['count'] == 1]['labels'].__len__()}")
+        print(f"amount of data & class only one : {self.df_1['labels'].__len__()}")
         
     def report_train_test_val_split(self):
         print(f"amount of train split : {len(self.df_train_split)}")
