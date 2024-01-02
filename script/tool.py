@@ -16,16 +16,18 @@ def in_blacklist(file):
             return True
     return False
 
-def scan_directory(path):
+def scan_directory(path, filter_blacklist=True, show_log=False):
     # Initialize a list to store the paths of JPG files
     df = []
 
     # Use os.walk to traverse the directory and its subdirectories
     for root, dirs, files in os.walk(path):
         for file in files:
-            if not in_blacklist(file):
+            if not in_blacklist(file) or not filter_blacklist:
                 df.append([os.path.join(root, file), file, os.path.basename(root)])
-    df = pd.DataFrame(df, columns = ['path_img', 'file_name', 'classes'])
+            elif show_log:
+              print(os.path.join(root, file))
+    df = pd.DataFrame(df, columns = ['images_path', 'file_names', 'labels'])
     print(f"amount of all image : {len(df)}")
     return df
 
