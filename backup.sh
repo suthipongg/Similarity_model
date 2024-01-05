@@ -17,5 +17,5 @@ mkdir -p $BACKUP_DIR/$ES_BACKUP_DIR
 
 for es_index in cosme_scanmodel cosme_barcodemodel cosme_brandmodel cosme_categorymodel cosme_predictionmodel cosme_productmodel cosme_subcategorymodel
 do
-    elasticdump --input=http://$ES_HOST:$ES_PORT/$es_index --output=$ES_BACKUP_DIR/$es_index.json --type=data
+    elasticdump --input=http://$ES_HOST:$ES_PORT/$es_index --output=$BACKUP_DIR/$ES_BACKUP_DIR/$es_index.json --type=data
 done
