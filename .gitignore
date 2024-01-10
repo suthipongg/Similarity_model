@@ -6,3 +6,4 @@ weights/
 .ipynb_checkpoints/
 db_cosmenet/
 *.pickle
+backup/
