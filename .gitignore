@@ -4,6 +4,10 @@ models/
 feature_map/
 weights/
 .ipynb_checkpoints/
-db_cosmenet/
+db_cosmenet/clean/
+db_cosmenet/data_production/
+db_cosmenet/raw_data_production/
+db_cosmenet/*.txt
+db_cosmenet/*.jpg
 *.pickle
 backup/
