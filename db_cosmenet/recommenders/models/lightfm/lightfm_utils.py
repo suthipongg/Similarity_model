@@ -114,7 +114,7 @@ def track_model_metrics(
 
     # collect the performance metrics into a dataframe
     fitting_metrics = pd.DataFrame(
-        zip(model_prec_train, model_prec_test, model_rec_train, model_rec_test),
+        zip(model_prec_train, model_prec_test, model_rec_train, model_rec_test, model_auc_train, model_auc_test),
         columns=[
             "model_prec_train",
             "model_prec_test",
