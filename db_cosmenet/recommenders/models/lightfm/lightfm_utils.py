@@ -5,7 +5,7 @@ import pandas as pd
 import numpy as np
 import seaborn as sns
 
-from lightfm.evaluation import precision_at_k, recall_at_k, auc_score
+from lightfm.evaluation import precision_at_k, recall_at_k, auc_score, reciprocal_rank
 from tqdm import tqdm
 tqdm.pandas()
 
@@ -19,7 +19,7 @@ def model_perf_plots(df):
     Returns:
         object: matplotlib axes
     """
-    g = sns.FacetGrid(df, col="metric", hue="stage", col_wrap=2, sharey=False)
+    g = sns.FacetGrid(df, col="metric", hue="stage", col_wrap=4, sharey=False)
     g = g.map(sns.scatterplot, "epoch", "value").add_legend()
 
 
@@ -84,7 +84,10 @@ def track_model_metrics(
 
     model_auc_train = [0] * no_epochs
     model_auc_test = [0] * no_epochs
-
+    
+    model_reciprocal_train = [0] * no_epochs
+    model_reciprocal_test = [0] * no_epochs
+    
     # fit model and store train/test metrics at each epoch
     for epoch in tqdm(range(no_epochs)):
         model.fit_partial(
@@ -110,11 +113,18 @@ def track_model_metrics(
         model_auc_test[epoch] = auc_score(
             model, test_interactions, **kwargs
         ).mean()
+        
+        model_reciprocal_train[epoch] = reciprocal_rank(
+            model, train_interactions, **kwargs
+        ).mean()
+        model_reciprocal_test[epoch] = reciprocal_rank(
+            model, test_interactions, **kwargs
+        ).mean()
 
 
     # collect the performance metrics into a dataframe
     fitting_metrics = pd.DataFrame(
-        zip(model_prec_train, model_prec_test, model_rec_train, model_rec_test, model_auc_train, model_auc_test),
+        zip(model_prec_train, model_prec_test, model_rec_train, model_rec_test, model_auc_train, model_auc_test, model_reciprocal_train, model_reciprocal_test),
         columns=[
             "model_prec_train",
             "model_prec_test",
@@ -122,6 +132,8 @@ def track_model_metrics(
             "model_rec_test",
             "model_auc_train",
             "model_auc_test",
+            "model_reciprocal_train", 
+            "model_reciprocal_test"
         ],
     )
     # convert into tidy format
@@ -132,13 +144,12 @@ def track_model_metrics(
     fitting_metrics["metric"] = fitting_metrics.level.str.split("_").str[1]
     fitting_metrics.drop(["level"], axis=1, inplace=True)
     # replace the metric keys to improve visualisation
-    metric_keys = {"prec": "Precision", "rec": "Recall","auc": "AUC"}
+    metric_keys = {"prec": "Precision", "rec": "Recall","auc": "AUC", 'reciprocal': 'Reciprocal Rank'}
     fitting_metrics.metric.replace(metric_keys, inplace=True)
     # plots the performance data
     if show_plot:
         model_perf_plots(fitting_metrics)
     return fitting_metrics, model
-
 
 def similar_users(user_id, user_features, model, N=10):
     """Function to return top N similar users based on https://github.com/lyst/lightfm/issues/244#issuecomment-355305681
